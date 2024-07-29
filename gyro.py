@@ -3,7 +3,7 @@ Title:      Project Gyro
 Desc:       An OSC lighting controller for Chamsys MagicQ Lighting Consoles
 Author:     Kalos Robinson-Frani
 Email:      st20218@howick.school.nz
-Date:       01/07/24
+Date:       30/07/24
 
 Version 1:
 Basic GUI
