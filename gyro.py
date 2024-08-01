@@ -156,7 +156,7 @@ if initiate_gui == TRUE:
 
     # SETTINGS
     settings_fme = Frame(root)
-    settings_img = ImageTk.PhotoImage(Image.open('resources\settings2.png').resize((50, 50)))
+    settings_img = ImageTk.PhotoImage(Image.open('resources\settings.png').resize((50, 50)))
     settings_btn = Button(settings_fme, image = settings_img, text="Settings", command=settings_wdw)
     settings_btn.image = settings_img
     settings_btn.grid(row=0, column=0, rowspan=2)
