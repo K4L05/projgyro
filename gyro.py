@@ -5,9 +5,8 @@ Author:     Kalos Robinson-Frani
 Email:      st20218@howick.school.nz
 Date:       09/08/24
 
-Version 4:
-Major Process Change
-Object Oriented Fixtures
+Version 5:
+The Gyro Joy Stick thingy
 
 Required Dependencies:
 python-osc
@@ -18,6 +17,9 @@ from tkinter import *; from PIL import Image, ImageTk; from tkinter import filed
 from pythonosc import udp_client
 import datetime
 
+import numpy as np
+import ctypes
+
 import json
 
 initiate_gui = TRUE
@@ -26,7 +28,7 @@ default_padding = 10
 
 
 # Constant Variables
-PROGRAM_TITLE = "PROJ GYRO\nV3.2"
+PROGRAM_TITLE = "PROJ GYRO\nV5.0"
 
 ip_address = "localhost" # Needs to be a string
 port = "0000" # Needs to be an interger
@@ -462,6 +464,94 @@ def settings_wdw():
     settings_fixture_attribute_fme.grid(row=1, column=1, rowspan=3, padx=default_padding)
 
 
+
+#GYRO FUNCTION
+
+simulate_pan = 0
+simulate_tilt = 0
+
+def map(value, in_min=0, in_max=403, out_min=0, out_max=255):
+    k = np.log(out_max + 1) / in_max
+    return int(out_max * (np.exp(k * value) - 1) / (np.exp(k * in_max) - 1))
+
+def gyro_translate(disp_x, disp_y, pan_range, tilt_range):
+    #global_fixture.current_pan = map(disp_x, 0, 255, pan_range[0], pan_range[1])
+    global_fixture.current_pan = disp_x
+    global_fixture.current_tilt = disp_y
+    
+    #global_fixture.current_tilt = map(disp_y, 0, 255, tilt_range[0], tilt_range[1])
+
+    pan_sdr.set(global_fixture.current_pan)
+    tilt_sdr.set(global_fixture.current_tilt)
+
+class RECT(ctypes.Structure):
+    _fields_ = [("left", ctypes.c_long),
+                ("top", ctypes.c_long),
+                ("right", ctypes.c_long),
+                ("bottom", ctypes.c_long)]
+
+class MouseJoystick:
+    def __init__(self, window):
+        self.window = window
+        self.canvas = Canvas(window, width=400, height=400, bg='white')
+        self.canvas.pack()
+        
+        # Create a rectangle to move
+        self.rect = self.canvas.create_rectangle(190, 190, 210, 210, fill='blue')
+        
+        # Bind mouse motion to the joystick method
+        self.canvas.bind('<Motion>', self.joystick)
+        
+        # Confine the mouse to the canvas
+        self.window.bind('<Enter>', self.lock_mouse)
+        self.window.bind('<Leave>', self.unlock_mouse)
+        
+        # Bind the Esc key to unlock the mouse
+        self.window.bind('<Escape>', self.unlock_mouse)
+        
+    def map_exponential(self, value):
+        return int(127.5 * (np.exp(value) - np.exp(-value)) / (np.exp(1) - np.exp(-1)) + 127.5)
+
+    def joystick(self, event):
+        # Get the current position of the mouse
+        x, y = event.x, event.y
+
+         # Normalize the coordinates to range from -1 to 1
+        norm_x = (x / self.canvas.winfo_width()) * 2 - 1
+        norm_y = (y / self.canvas.winfo_height()) * 2 - 1
+        norm_y = -norm_y
+
+        # Apply exponential mapping
+        mapped_x = self.map_exponential(norm_x)
+        mapped_y = self.map_exponential(norm_y)
+
+        gyro_translate(mapped_x, mapped_y, global_fixture.pan_range, global_fixture.tilt_range)
+        
+        # Update the position of the rectangle
+        self.canvas.coords(self.rect, x-10, y-10, x+10, y+10)
+        
+        # Print the mapped coordinates
+        
+    def lock_mouse(self, event):
+        # Get the window coordinates
+        x1 = self.window.winfo_rootx()
+        y1 = self.window.winfo_rooty()
+        x2 = x1 + self.canvas.winfo_width() - 1  # Adjust for right border
+        y2 = y1 + self.canvas.winfo_height() - 1  # Adjust for bottom border
+        
+        # Lock the mouse within the window
+        rect = RECT(x1, y1, x2, y2)
+        ctypes.windll.user32.ClipCursor(ctypes.byref(rect))
+        
+    def unlock_mouse(self, event):
+        # Release the mouse lock
+        ctypes.windll.user32.ClipCursor(None)
+
+def gyro():
+    gyro_window = Toplevel()
+    gyro_app = MouseJoystick(gyro_window)
+    
+
 def show_values(value):
     print(value)
 
@@ -471,6 +561,8 @@ def fixture_select(event):
 
     fixture = specify_fixture(selected_fixture)
     fixture_selection_lbl.config(text="> {} - {}".format(selected_fixture, fixture.friendly_name))
+
+    osc_client.send_message(f"/rpc", "\<03>H") # SENDS CLIENT MESSAGE
 
     osc_client.send_message(f"/rpc", "\<01>,{}H".format(str(selected_fixture))) # SENDS CLIENT MESSAGE
 
@@ -534,6 +626,8 @@ fixture = None
 
 root = Tk()
 root.title("Project GYRO")
+logo_img = PhotoImage(file = "resources/logo.png")
+root.iconphoto(True, logo_img)
 
 
 # SETTINGS
@@ -613,12 +707,18 @@ pantilt_fme = LabelFrame(attributes_fme, text="Pan/Tilt")
 pan_sdr = Scale(pantilt_fme, from_=0, to=100, orient=HORIZONTAL, length=200, command=pan_update, state="disabled")
 tilt_sdr = Scale(pantilt_fme, from_=0, to=100, orient=VERTICAL, length=200, command=tilt_update, state="disabled")
 
-pan_sdr.grid(row=0, column=0)
-tilt_sdr.grid(row=0, column=1)
+
+
+pan_sdr.grid(row=5, column=0)
+tilt_sdr.grid(row=0, column=1, rowspan=6)
 pantilt_fme.grid(row=0, column=2)
 
 attributes_fme.grid(row=4, column=3, rowspan=5, columnspan=5, padx=default_padding, pady=default_padding)
 
+gyro_img = ImageTk.PhotoImage(Image.open('resources\gyro.png').resize((50, 50)))
+gyro_btn = Button(root, image = gyro_img, text="GYRO", command=gyro, compound=RIGHT)
+gyro_btn.image = settings_img
+gyro_btn.grid(row=4, column=8, padx=default_padding, pady=default_padding)
 
 
 
