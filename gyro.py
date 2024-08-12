@@ -3,14 +3,17 @@ Title:      Project Gyro
 Desc:       An OSC lighting controller for Chamsys MagicQ Lighting Consoles
 Author:     Kalos Robinson-Frani
 Email:      st20218@howick.school.nz
-Date:       12/08/24
+Date:       13/08/24
 
-Version 6:
+Version 6.1:
+Bug Fixes
 Code Clean Up
 Comments
 
 Required Dependencies:
 python-osc
+pillow
+numpy
 """
 
 # Import Required Dependencies
@@ -27,7 +30,7 @@ import json
 default_padding = 10
 
 # Program Title
-PROGRAM_TITLE = "PROJ GYRO\nV6.0"
+PROGRAM_TITLE = "PROJ GYRO\nV6.1"
 
 # Connection Details
 ip_address = "localhost" # Localhost by default because the osc module gets angry when a destination is invalid
@@ -191,10 +194,10 @@ def confirm_conn_details():
     global ip_address, port
 
     ip_address = ip_address_var.get()
-    console_log("New IP: ", ip_address)
+    console_log(("New IP: ", ip_address))
 
     port = port_var.get()
-    console_log("New Port: ", port)
+    console_log(("New Port: ", port))
 
     settings_ipaddress_detail_lbl.config(text=ip_address)
     settings_port_detail_lbl.config(text=port)
@@ -535,9 +538,9 @@ def fixture_select(event):
     fixture = specify_fixture(selected_fixture)
     fixture_selection_lbl.config(text="> {} - {}".format(selected_fixture, fixture.friendly_name))
 
-    osc_client.send_message(f"/rpc", "\<03>H") # SENDS CLIENT MESSAGE to Lighting console
+    osc_client.send_message(f"/rpc", "\\<03>H") # SENDS CLIENT MESSAGE to Lighting console
 
-    osc_client.send_message(f"/rpc", "\<01>,{}H".format(str(selected_fixture))) # SENDS CLIENT MESSAGE
+    osc_client.send_message(f"/rpc", "\\<01>,{}H".format(str(selected_fixture))) # SENDS CLIENT MESSAGE
 
     console_log("Selected Fixture: {}".format(selected_fixture))
 
@@ -572,7 +575,7 @@ def intensity_update(event):
     print(f"Intensity: {intensity}")
 
     global_fixture.current_intensity = intensity
-    osc_client.send_message("/rpc", "\<05>,{}H".format(str(intensity)))
+    osc_client.send_message("/rpc", "\\<05>,{}H".format(str(intensity)))
 
 # Updates the pan from the slider
 def pan_update(event):
@@ -580,7 +583,7 @@ def pan_update(event):
     print(f"Pan: {pan}")
 
     global_fixture.current_pan = pan
-    osc_client.send_message("/rpc", "\<06>,4,{}H".format(pan))
+    osc_client.send_message("/rpc", "\\<06>,4,{}H".format(pan))
 
 # Updates the tilt from the slider
 def tilt_update(event):
@@ -588,7 +591,7 @@ def tilt_update(event):
 
     global_fixture.current_tilt = tilt
     print(f"Tilt: {tilt}")
-    osc_client.send_message("/rpc", "\<06>,5,{}H".format(tilt))
+    osc_client.send_message("/rpc", "\\<06>,5,{}H".format(tilt))
 
 # Start first OSC
 init_osc()
@@ -605,7 +608,7 @@ root.iconphoto(True, logo_img)
 
 # SETTINGS
 settings_fme = Frame(root)
-settings_img = ImageTk.PhotoImage(Image.open('resources\settings.png').resize((50, 50)))
+settings_img = ImageTk.PhotoImage(Image.open('resources/settings.png').resize((50, 50)))
 settings_btn = Button(settings_fme, image = settings_img, text="Settings", command=settings_wdw)
 settings_btn.image = settings_img
 settings_btn.grid(row=0, column=0, rowspan=2)
@@ -687,7 +690,7 @@ pantilt_fme.grid(row=0, column=2)
 attributes_fme.grid(row=4, column=3, rowspan=5, columnspan=5, padx=default_padding, pady=default_padding)
 
 # Gyro Function
-gyro_img = ImageTk.PhotoImage(Image.open('resources\gyro.png').resize((50, 50)))
+gyro_img = ImageTk.PhotoImage(Image.open('resources/gyro.png').resize((50, 50)))
 gyro_btn = Button(root, image = gyro_img, text="GYRO", command=gyro, compound=RIGHT)
 gyro_btn.image = settings_img
 gyro_btn.grid(row=4, column=8, padx=default_padding, pady=default_padding)
