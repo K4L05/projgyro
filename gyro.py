@@ -5,9 +5,9 @@ Author:     Kalos Robinson-Frani
 Email:      st20218@howick.school.nz
 Date:       12/08/24
 
-Version 5.2:
-
-Gyro Click functionality
+Version 6:
+Code Clean Up
+Comments
 
 Required Dependencies:
 python-osc
@@ -23,19 +23,20 @@ import ctypes
 
 import json
 
-initiate_gui = TRUE
+# Default GUI Padding
 default_padding = 10
 
+# Program Title
+PROGRAM_TITLE = "PROJ GYRO\nV6.0"
 
+# Connection Details
+ip_address = "localhost" # Localhost by default because the osc module gets angry when a destination is invalid
+port = "0000" 
 
-# Constant Variables
-PROGRAM_TITLE = "PROJ GYRO\nV5.2"
-
-ip_address = "localhost" # Needs to be a string
-port = "0000" # Needs to be an interger
-
+# List that holds all the fixture objects
 fixtures = []
 
+# Light fixture class system
 class LightFixture:
     def __init__(self, 
                  address, 
@@ -75,40 +76,6 @@ class LightFixture:
         self.pan_range = pan_range
         self.tilt_range = tilt_range
 
-"""
-FIXTURES_LIST = { 
-    # Address > Friendly Name, Attributes > Intensity (true/false), Pantilt (true/false), PanTilt_Details > pan_range, default_pan, tilt_range, default_tilt.
-    "38": {
-        "friendly_name": "EKSpot 1",
-        "attributes": {
-            "active": True,
-            "intensity": True,
-            "pantilt": True,
-            "pantilt_details": {
-                "pan_range": (0,255),
-                "def_pan": 0,
-                "tilt_range": (0,255),
-                "def_tilt": 0
-            }
-        }
-    },
-    "39": {
-        "friendly_name": "EKSpot 2",
-        "attributes": {
-            "active": True,
-            "intensity": True,
-            "pantilt": True,
-            "pantilt_details": {
-                "pan_range": (0,255),
-                "default_pan": 0,
-                "tilt_range": (0,255),
-                "default_tilt": 0
-            }
-            
-        }
-    }
-}
-"""
 
 # Initiates / Reinitiates the OSC Object
 def init_osc(): 
@@ -117,14 +84,19 @@ def init_osc():
     try:
         osc_client = udp_client.SimpleUDPClient(ip_address, int(port))
     except:
-        print("WARNING SOCKET ERROR")
-        osc_client = udp_client.SimpleUDPClient("localhost", 8000)
+        console_log("WARNING SOCKET ERROR") # Triggers when destination is invalid, defaults back to localhost
+        ip_address = "localhost"
+        osc_client = udp_client.SimpleUDPClient(ip_address, 8000)
 
+
+# Console Log function that updates the console log feature in the program
 def console_log(data):
     package = "<{}> {}".format((datetime.datetime.now().strftime('%H:%M:%S')), data)
     console_lb.insert(END, package)
     console_lb.yview(END)
 
+
+# Reloads the widgets in the settings window
 def reload_settings():
     settings_fixture_list_lb.delete(0,END)
 
@@ -134,6 +106,8 @@ def reload_settings():
     settings_ipaddress_detail_lbl.config(text=ip_address)
     settings_port_detail_lbl.config(text=ip_address)
 
+
+# Reloads the widgets in the main window
 def reload_main():
     init_osc()
 
@@ -142,21 +116,20 @@ def reload_main():
 
     fixture_list_lb.delete(0, END)
 
-    for fixture in fixtures:
+    for fixture in fixtures: # Adds fixtures to the listbox
         if fixture.att_active:
-            fixture_list_lb.insert(END, (fixture.address, fixture.friendly_name)) # FIXTURES
+            fixture_list_lb.insert(END, (fixture.address, fixture.friendly_name))
 
 
-
-    console_log("Updated Main")
-
-# The genius thing that locates fixture 
+# The genius thing that locates fixture object itself, in the fixture object list
 def specify_fixture(address):
     for fixture in fixtures:
         if fixture.address == address:
             return fixture
     return None
 
+
+# Confirms the addition of a fixture
 def confirm_fixture():
     global fixtures
     new_fixture_address = None
@@ -165,20 +138,16 @@ def confirm_fixture():
     fixture = LightFixture(new_fixture_address)
     
     fixtures.append(fixture)
-    
-    for fixture in fixtures:
-        print(fixture)
 
-    # FIXTURE ADD
     for fixture in fixtures:
         listbox_item = (fixture.address, fixture.friendly_name)
         if listbox_item not in settings_fixture_list_lb.get(0, END):
             settings_fixture_list_lb.insert(END, (listbox_item))
 
-        
-
     add_new_fixture_window.destroy()
 
+
+# Opens the input dialog for the addition for a new fixture
 def add_new_fixture():
     global add_new_fixture_window
     add_new_fixture_window = Toplevel()
@@ -193,50 +162,17 @@ def add_new_fixture():
     add_new_fixture_fme.grid(row=0, column=0, padx=default_padding*2, pady=default_padding*2)
     new_fixture_ety.grid(row=0, column=0)
 
-def confirm_conn_details():
-    global ip_address, port
-
-    print("DEBUGGING", ip_address_var.get(), port_var.get())
-
-    ip_address = ip_address_var.get()
-    print("New IP: ", ip_address)
-
-    port = port_var.get()
-    print("New Port: ", port)
-
-    settings_ipaddress_detail_lbl.config(text=ip_address)
-    settings_port_detail_lbl.config(text=port)
-
-
-
-
-    edit_conn_details_window.destroy()
-
-def confirm_edit_friendly_name():
-    new_friendly_name = new_friendly_name_var.get()
-    print(new_friendly_name)
-
-    settings_fixture.friendly_name = new_friendly_name
-
-    reload_settings()
-
-    settings_edit_friendly_name_window.destroy()
-
+# Opens the input dialog to edit the connectiond details
 def edit_conn_details():
     global edit_conn_details_window, ip_address, port, ip_address_var, port_var
 
-
     edit_conn_details_window = Toplevel()
-    
     edit_conn_details_fme = LabelFrame(edit_conn_details_window, text="Edit Connection Details")
-
     edit_ipaddress_lbl = Label(edit_conn_details_fme, text="IP:")
     edit_ipaddress_ety = Entry(edit_conn_details_fme, text=ip_address_var)
-
     edit_port_lbl = Label(edit_conn_details_fme, text="Port:")
     edit_port_ety = Entry(edit_conn_details_fme, text=port_var)
 
-    
     conn_details_confirm_img = ImageTk.PhotoImage(Image.open('resources/check.png').resize((50, 50)))
     conn_details_confirm_btn = Button(edit_conn_details_fme, image = conn_details_confirm_img, text="Confirm", command=confirm_conn_details)
     conn_details_confirm_btn.image = conn_details_confirm_img
@@ -247,10 +183,37 @@ def edit_conn_details():
     edit_port_lbl.grid(row=1, column=0)
     edit_port_ety.grid(row=1, column=1)
 
-
-
     edit_conn_details_fme.grid(row=0, column=0, padx=default_padding*2, pady=default_padding*2)
-      
+
+
+# Confirms connection details
+def confirm_conn_details():
+    global ip_address, port
+
+    ip_address = ip_address_var.get()
+    console_log("New IP: ", ip_address)
+
+    port = port_var.get()
+    console_log("New Port: ", port)
+
+    settings_ipaddress_detail_lbl.config(text=ip_address)
+    settings_port_detail_lbl.config(text=port)
+
+    edit_conn_details_window.destroy()
+
+
+# Confirms the new friendly name
+def confirm_edit_friendly_name():
+    new_friendly_name = new_friendly_name_var.get()
+    print(new_friendly_name)
+
+    settings_fixture.friendly_name = new_friendly_name
+
+    reload_settings()
+
+    settings_edit_friendly_name_window.destroy()
+
+# Opens the input dialog of editing a friendly name
 def settings_edit_friendly_name():
     global settings_edit_friendly_name_window
     settings_edit_friendly_name_window = Toplevel()
@@ -266,35 +229,29 @@ def settings_edit_friendly_name():
     edit_friendly_name_fme.grid(row=0, column=0, padx=default_padding*2, pady=default_padding*2)
     edit_friendly_name_ety.grid(row=0, column=0)
 
+
+# The fixture selection function for the settings listbox
 def settings_fixture_select(selection):
     global settings_fixture
 
     selected_fixture = selection.widget.get(selection.widget.curselection())[0]
-    print(f"DEBUG?: {selected_fixture}")
-
     settings_fixture = specify_fixture(selected_fixture)
-
-
 
     settings_fixture_selected_lbl.config(text="> {} - {}".format(selected_fixture, settings_fixture.friendly_name))
 
     settings_fixture_attribute_friendly_name_lbl.config(text=settings_fixture.friendly_name)
-
     settings_fixture_attribute_friendly_name_edit_btn.config(state="active")
-
     settings_fixture_attribute_active_cbx.config(state="active")
     att_active_var.set(settings_fixture.att_active)
-
     settings_fixture_attribute_intensity_cbx.config(state="active")
     att_intensity_var.set(settings_fixture.att_intensity)
-
     settings_fixture_attribute_colour_cbx.config(state="active")
     att_colour_var.set(settings_fixture.att_colour)
-
-
     settings_fixture_attribute_pantilt_cbx.config(state="active")
     att_pantilt_var.set(settings_fixture.att_pantilt)
 
+
+# VARIOUS ATTRIBUTE FUNCTIONS
 def fixture_attribute_active():
     settings_fixture.att_active = att_active_var.get()
 
@@ -307,16 +264,17 @@ def fixture_attribute_colour():
 def fixture_attribute_pantilt():
     settings_fixture.att_pantilt = att_pantilt_var.get()
 
+# Accept Settings and reload main window widgets
 def accept_settings():
-    print("Accept Settings")
+    console_log("Accept Settings")
     settings_window.destroy()
     reload_main()
-    pass
 
+# Save settings to a file
 def save_settings():
-    print("Save Settings")
+    console_log("Save Settings")
 
-    snapshot = {
+    snapshot = { # Creates the dictionary of the current program
         "connection": {
             "ip": ip_address,
             "port": port,
@@ -329,18 +287,17 @@ def save_settings():
 
         snapshot["fixtures"][fixture.address] = fixture_line
 
-    
-
-    file_save_dialog = filedialog.asksaveasfilename(initialfile='gyro_config.json', defaultextension=".json")
+    file_save_dialog = filedialog.asksaveasfilename(initialfile='gyro_config.json', defaultextension=".json") # Opens the file navigation dialog
     
     with open(file_save_dialog, 'w') as file_save:
         json.dump(snapshot, file_save, ensure_ascii=False, indent=4)
 
+
+# Import connection details & fixtures from file
 def import_settings():
     global ip_address, port, fixtures
 
     print("Import Settings")
-
 
     file_load_dialog = filedialog.askopenfilename(title="Select a File", filetypes=[("JSON Config files", "*.json"), ("All files", "*.*")])
     
@@ -352,23 +309,22 @@ def import_settings():
             ip_address = load_snapshot['connection']['ip']
             port = load_snapshot['connection']['port']
 
-            for fixture_data in load_snapshot['fixtures']:
+            for fixture_data in load_snapshot['fixtures']: # Loads data into fixture class
                 fixture = LightFixture(fixture_data, load_snapshot['fixtures'][fixture_data][0],load_snapshot['fixtures'][fixture_data][1],load_snapshot['fixtures'][fixture_data][2],load_snapshot['fixtures'][fixture_data][3],load_snapshot['fixtures'][fixture_data][4],load_snapshot['fixtures'][fixture_data][5],load_snapshot['fixtures'][fixture_data][6],load_snapshot['fixtures'][fixture_data][7],load_snapshot['fixtures'][fixture_data][8],load_snapshot['fixtures'][fixture_data][9],load_snapshot['fixtures'][fixture_data][10],load_snapshot['fixtures'][fixture_data][11])
                 fixtures.append(fixture)
 
-        reload_settings()
+        reload_settings() # Reloads program
 
 
 # Settings Window
 def settings_wdw():
     global settings_window, settings_fixture_list_lb, ip_address, port
 
-
-    settings_window = Toplevel()
+    settings_window = Toplevel() # Creates window
     settings_window.title("Settings")
 
     Label(settings_window, text="Settings Menu").grid(row=0, column=0, padx=default_padding, pady=default_padding)
-    settings_fixture_fme = LabelFrame(settings_window, text="Fixtures")
+    settings_fixture_fme = LabelFrame(settings_window, text="Fixtures") # Title
 
     control_fme = Frame(settings_window)
 
@@ -465,18 +421,15 @@ def settings_wdw():
     settings_fixture_attribute_fme.grid(row=1, column=1, rowspan=3, padx=default_padding)
 
 
+# GYRO FUNCTION
 
-#GYRO FUNCTION
-
-simulate_pan = 0
-simulate_tilt = 0
-
-def map(value, in_min=0, in_max=403, out_min=0, out_max=255):
+def map(value, in_min=0, in_max=403, out_min=0, out_max=255): # Mapping function if looking for an exponential curvature (future update)
     k = np.log(out_max + 1) / in_max
     return int(out_max * (np.exp(k * value) - 1) / (np.exp(k * in_max) - 1))
 
+# Translates graphical data to fixture data
 def gyro_translate(disp_x, disp_y, pan_range, tilt_range):
-    #global_fixture.current_pan = map(disp_x, 0, 255, pan_range[0], pan_range[1])
+    #global_fixture.current_pan = map(disp_x, 0, 255, pan_range[0], pan_range[1]) # Exponential Curve, future update
     global_fixture.current_pan = disp_x
     global_fixture.current_tilt = disp_y
     
@@ -485,33 +438,36 @@ def gyro_translate(disp_x, disp_y, pan_range, tilt_range):
     pan_sdr.set(global_fixture.current_pan)
     tilt_sdr.set(global_fixture.current_tilt)
 
-class RECT(ctypes.Structure):
+
+class RECT(ctypes.Structure): # Boundary for the mouse barrier
     _fields_ = [("left", ctypes.c_long),
                 ("top", ctypes.c_long),
                 ("right", ctypes.c_long),
                 ("bottom", ctypes.c_long)]
 
-class MouseJoystick:
+class MouseJoystick: # Joystick Function
     def __init__(self, window):
         self.window = window
         self.canvas = Canvas(window, width=800, height=800, bg='white')
         self.canvas.pack()
         
-        # Create a rectangle to move
+        # Create a rectangle to move as cursor
         self.rect = self.canvas.create_rectangle(190, 190, 210, 210, fill='blue')
         
         # Bind mouse motion to the joystick method
         self.canvas.bind('<Motion>', self.joystick)
 
+        # (LMC) Click Functionality
         self.canvas.bind("<Button-1>", self.click)
         
         # Confine the mouse to the canvas
         self.window.bind('<Enter>', self.lock_mouse)
         self.window.bind('<Leave>', self.unlock_mouse)
         
-        # Bind the Esc key to unlock the mouse
+        # Have the Esc key to unlock the mouse
         self.window.bind('<Escape>', self.unlock_mouse)
         
+    # Click functionality to change intensity    
     def click(self, event):
         if global_fixture.current_intensity == 0:
             global_fixture.current_intensity = 100
@@ -525,31 +481,31 @@ class MouseJoystick:
             global_fixture.current_intensity = 0
             intensity_sdr.set(0)
 
-        print("click")
+        console_log("click recieved")
 
-    def map_exponential(self, value):
+    def map_exponential(self, value): # Maps window's positional value to fixture 
         return int(127.5 * (np.exp(value) - np.exp(-value)) / (np.exp(1) - np.exp(-1)) + 127.5)
 
-    def joystick(self, event):
+
+    def joystick(self, event): 
         # Get the current position of the mouse
         x, y = event.x, event.y
 
          # Normalize the coordinates to range from -1 to 1
         norm_x = (x / self.canvas.winfo_width()) * 2 - 1
         norm_y = (y / self.canvas.winfo_height()) * 2 - 1
-        norm_y = -norm_y
+        norm_y = -norm_y # Reverse y axis
 
         # Apply exponential mapping
         mapped_x = self.map_exponential(norm_x)
         mapped_y = self.map_exponential(norm_y)
 
-        gyro_translate(mapped_x, mapped_y, global_fixture.pan_range, global_fixture.tilt_range)
+        gyro_translate(mapped_x, mapped_y, global_fixture.pan_range, global_fixture.tilt_range) # Send to gyro translater and updater.
         
-        # Update the position of the rectangle
+        # Update the visual position of the rectangle
         self.canvas.coords(self.rect, x-10, y-10, x+10, y+10)
         
-        # Print the mapped coordinates
-        
+    # Locks mouse to boundaries
     def lock_mouse(self, event):
         # Get the window coordinates
         x1 = self.window.winfo_rootx()
@@ -565,14 +521,12 @@ class MouseJoystick:
         # Release the mouse lock
         ctypes.windll.user32.ClipCursor(None)
 
+# Gyro function
 def gyro():
     gyro_window = Toplevel()
     gyro_app = MouseJoystick(gyro_window)
     
-
-def show_values(value):
-    print(value)
-
+# Main window fixture selection
 def fixture_select(event):
     selected_fixture = event.widget.get(event.widget.curselection())[0]
     
@@ -581,7 +535,7 @@ def fixture_select(event):
     fixture = specify_fixture(selected_fixture)
     fixture_selection_lbl.config(text="> {} - {}".format(selected_fixture, fixture.friendly_name))
 
-    osc_client.send_message(f"/rpc", "\<03>H") # SENDS CLIENT MESSAGE
+    osc_client.send_message(f"/rpc", "\<03>H") # SENDS CLIENT MESSAGE to Lighting console
 
     osc_client.send_message(f"/rpc", "\<01>,{}H".format(str(selected_fixture))) # SENDS CLIENT MESSAGE
 
@@ -609,8 +563,10 @@ def fixture_select(event):
 
 
     global global_fixture
-    global_fixture = fixture
+    global_fixture = fixture # Globalises fixture selection for gyro & reference later
 
+
+# Updates the intensity from the slider
 def intensity_update(event):
     intensity=event
     print(f"Intensity: {intensity}")
@@ -618,6 +574,7 @@ def intensity_update(event):
     global_fixture.current_intensity = intensity
     osc_client.send_message("/rpc", "\<05>,{}H".format(str(intensity)))
 
+# Updates the pan from the slider
 def pan_update(event):
     pan = event
     print(f"Pan: {pan}")
@@ -625,6 +582,7 @@ def pan_update(event):
     global_fixture.current_pan = pan
     osc_client.send_message("/rpc", "\<06>,4,{}H".format(pan))
 
+# Updates the tilt from the slider
 def tilt_update(event):
     tilt = event
 
@@ -632,19 +590,13 @@ def tilt_update(event):
     print(f"Tilt: {tilt}")
     osc_client.send_message("/rpc", "\<06>,5,{}H".format(tilt))
 
-
-
-
-## Begin??
-
+# Start first OSC
 init_osc()
 
-
-# globalisation
-global root, ip_details_lbl, port_details_lbl, fixture_list_lb, fixture_selection_lbl, console_lb, intensity_sdr, pan_sdr, tilt_sdr
-
+# Resets fixture
 fixture = None
 
+# Creates main window
 root = Tk()
 root.title("Project GYRO")
 logo_img = PhotoImage(file = "resources/logo.png")
@@ -660,7 +612,6 @@ settings_btn.grid(row=0, column=0, rowspan=2)
 settings_fme.grid(column=0, row=0, rowspan=2, columnspan=2, padx=default_padding, pady=default_padding)
 
 # CONNECTION DETAILS
-
 if ip_address == None or ip_address == "":
     display_ip_address = "None"
 else:
@@ -683,10 +634,8 @@ port_details_lbl = Label(connection_details_fme, text=port, anchor="w", width=15
 # Griddy
 ip_title_lbl.grid(row=0, column=0)
 ip_details_lbl.grid(row=0, column=1)
-
 port_title_lbl.grid(row=1, column=0)
 port_details_lbl.grid(row=1, column=1)
-
 connection_details_fme.grid(row=0, column=2, columnspan=2, rowspan=2, padx=5, pady=2)
 
 
@@ -718,17 +667,18 @@ fixture_list_lb.bind("<<ListboxSelect>>", fixture_select)
 fixture_selection_lbl = Label(fixture_fme, text="No Fixture Selected", font="24", width=15)
 fixture_selection_lbl.grid(row=1, column=2, padx=default_padding, pady=default_padding)
 
+# CONTROLLER FRAME
 attributes_fme = LabelFrame(root, text="Controller")
+# Intensity
 intensity_fme = LabelFrame(attributes_fme, text="Intensity")
 intensity_sdr = Scale(intensity_fme, from_=0, to=100, orient=HORIZONTAL, length=200, command=intensity_update, state="disabled")
 intensity_sdr.grid(row=0, column=0)
 intensity_fme.grid(row=0, column=0)
 
+# Pan/Tilt
 pantilt_fme = LabelFrame(attributes_fme, text="Pan/Tilt")
 pan_sdr = Scale(pantilt_fme, from_=0, to=100, orient=HORIZONTAL, length=200, command=pan_update, state="disabled")
 tilt_sdr = Scale(pantilt_fme, from_=0, to=100, orient=VERTICAL, length=200, command=tilt_update, state="disabled")
-
-
 
 pan_sdr.grid(row=5, column=0)
 tilt_sdr.grid(row=0, column=1, rowspan=6)
@@ -736,13 +686,13 @@ pantilt_fme.grid(row=0, column=2)
 
 attributes_fme.grid(row=4, column=3, rowspan=5, columnspan=5, padx=default_padding, pady=default_padding)
 
+# Gyro Function
 gyro_img = ImageTk.PhotoImage(Image.open('resources\gyro.png').resize((50, 50)))
 gyro_btn = Button(root, image = gyro_img, text="GYRO", command=gyro, compound=RIGHT)
 gyro_btn.image = settings_img
 gyro_btn.grid(row=4, column=8, padx=default_padding, pady=default_padding)
 
-
-
+# Live Variables
 new_fixture_var = StringVar()
 new_friendly_name_var = StringVar()
 
@@ -755,5 +705,6 @@ att_intensity_var = IntVar()
 att_colour_var = IntVar() # For Future Versions
 att_pantilt_var = IntVar()
 
-root.mainloop()
 
+# Run the loop
+root.mainloop()
