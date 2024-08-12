@@ -5,8 +5,8 @@ Author:     Kalos Robinson-Frani
 Email:      st20218@howick.school.nz
 Date:       09/08/24
 
-Version 5:
-The Gyro Joy Stick thingy
+Version 5.1:
+Larger window for the Gyro Joy Stick thingy
 
 Required Dependencies:
 python-osc
@@ -28,7 +28,7 @@ default_padding = 10
 
 
 # Constant Variables
-PROGRAM_TITLE = "PROJ GYRO\nV5.0"
+PROGRAM_TITLE = "PROJ GYRO\nV5.1"
 
 ip_address = "localhost" # Needs to be a string
 port = "0000" # Needs to be an interger
@@ -493,7 +493,7 @@ class RECT(ctypes.Structure):
 class MouseJoystick:
     def __init__(self, window):
         self.window = window
-        self.canvas = Canvas(window, width=400, height=400, bg='white')
+        self.canvas = Canvas(window, width=800, height=800, bg='white')
         self.canvas.pack()
         
         # Create a rectangle to move
@@ -501,6 +501,8 @@ class MouseJoystick:
         
         # Bind mouse motion to the joystick method
         self.canvas.bind('<Motion>', self.joystick)
+
+
         
         # Confine the mouse to the canvas
         self.window.bind('<Enter>', self.lock_mouse)
@@ -509,6 +511,8 @@ class MouseJoystick:
         # Bind the Esc key to unlock the mouse
         self.window.bind('<Escape>', self.unlock_mouse)
         
+
+
     def map_exponential(self, value):
         return int(127.5 * (np.exp(value) - np.exp(-value)) / (np.exp(1) - np.exp(-1)) + 127.5)
 
@@ -557,6 +561,7 @@ def show_values(value):
 
 def fixture_select(event):
     selected_fixture = event.widget.get(event.widget.curselection())[0]
+    
     print(f"Fixture: {selected_fixture}")
 
     fixture = specify_fixture(selected_fixture)
@@ -574,7 +579,9 @@ def fixture_select(event):
         intensity_sdr.config(state=DISABLED)
 
     if fixture.att_pantilt:
-        pan_sdr.config(state=ACTIVE, from_=fixture.pan_range[0], to=fixture.pan_range[1])
+        pan_sdr.config(state=ACTIVE, from_=0, to=173)
+        #pan_sdr.config(state=ACTIVE, from_=fixture.pan_range[0], to=fixture.pan_range[1])
+        
 
         tilt_sdr.config(state=ACTIVE, from_=fixture.tilt_range[0], to=fixture.tilt_range[1])
     else:
