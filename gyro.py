@@ -3,10 +3,11 @@ Title:      Project Gyro
 Desc:       An OSC lighting controller for Chamsys MagicQ Lighting Consoles
 Author:     Kalos Robinson-Frani
 Email:      st20218@howick.school.nz
-Date:       09/08/24
+Date:       12/08/24
 
-Version 5.1:
-Larger window for the Gyro Joy Stick thingy
+Version 5.2:
+
+Gyro Click functionality
 
 Required Dependencies:
 python-osc
@@ -28,7 +29,7 @@ default_padding = 10
 
 
 # Constant Variables
-PROGRAM_TITLE = "PROJ GYRO\nV5.1"
+PROGRAM_TITLE = "PROJ GYRO\nV5.2"
 
 ip_address = "localhost" # Needs to be a string
 port = "0000" # Needs to be an interger
@@ -502,7 +503,7 @@ class MouseJoystick:
         # Bind mouse motion to the joystick method
         self.canvas.bind('<Motion>', self.joystick)
 
-
+        self.canvas.bind("<Button-1>", self.click)
         
         # Confine the mouse to the canvas
         self.window.bind('<Enter>', self.lock_mouse)
@@ -511,7 +512,20 @@ class MouseJoystick:
         # Bind the Esc key to unlock the mouse
         self.window.bind('<Escape>', self.unlock_mouse)
         
+    def click(self, event):
+        if global_fixture.current_intensity == 0:
+            global_fixture.current_intensity = 100
+            intensity_sdr.set(100)
+        
+        elif global_fixture.current_intensity == 100:
+            global_fixture.current_intensity = 0
+            intensity_sdr.set(0)
+        
+        else:
+            global_fixture.current_intensity = 0
+            intensity_sdr.set(0)
 
+        print("click")
 
     def map_exponential(self, value):
         return int(127.5 * (np.exp(value) - np.exp(-value)) / (np.exp(1) - np.exp(-1)) + 127.5)
