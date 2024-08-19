@@ -3,12 +3,10 @@ Title:      Project Gyro
 Desc:       An OSC lighting controller for Chamsys MagicQ Lighting Consoles
 Author:     Kalos Robinson-Frani
 Email:      st20218@howick.school.nz
-Date:       13/08/24
+Date:       19/08/24
 
-Version 6.1:
-Bug Fixes
-Code Clean Up
-Comments
+Version 7:
+IP / Port Validation
 
 Required Dependencies:
 python-osc
@@ -30,7 +28,7 @@ import json
 default_padding = 10
 
 # Program Title
-PROGRAM_TITLE = "PROJ GYRO\nV6.1"
+PROGRAM_TITLE = "PROJ GYRO\nV7.0"
 
 # Connection Details
 ip_address = "localhost" # Localhost by default because the osc module gets angry when a destination is invalid
@@ -167,9 +165,16 @@ def add_new_fixture():
 
 # Opens the input dialog to edit the connectiond details
 def edit_conn_details():
-    global edit_conn_details_window, ip_address, port, ip_address_var, port_var
+    global edit_conn_details_window, ip_address, port, ip_address_var, port_var, validate_ip_lbl, validate_port_lbl
 
     edit_conn_details_window = Toplevel()
+
+    validate_ip_lbl = Label(edit_conn_details_window, text="", fg="red")
+    validate_ip_lbl.grid(row=1, column=0)
+
+    validate_port_lbl = Label(edit_conn_details_window, text="", fg="red")
+    validate_port_lbl.grid(row=2, column=0)
+
     edit_conn_details_fme = LabelFrame(edit_conn_details_window, text="Edit Connection Details")
     edit_ipaddress_lbl = Label(edit_conn_details_fme, text="IP:")
     edit_ipaddress_ety = Entry(edit_conn_details_fme, text=ip_address_var)
@@ -188,21 +193,73 @@ def edit_conn_details():
 
     edit_conn_details_fme.grid(row=0, column=0, padx=default_padding*2, pady=default_padding*2)
 
+# Validates IP Address
+def validate_ip_address(address):
+    parts = address.split(".")
+    validate_ip_lbl.config(text="")
+
+        # Format validation
+    if len(parts) != 4:
+        validate_ip_lbl.config(text="IP is not valid: {} (Not IPv4)".format(ip_address))
+        return False
+
+        # Integer validation
+    for part in parts:
+        try:
+            if not isinstance(int(part), int):
+                validate_ip_lbl.config(text="IP is not valid: {} (Not integer)".format(ip_address))
+                return False
+        except ValueError:
+            validate_ip_lbl.config(text="IP is not valid: {} (Not integer)".format(ip_address))
+            return False
+
+        if int(part) < 0 or int(part) > 255:
+            validate_ip_lbl.config(text="IP is not valid: {} (Out of Range)".format(ip_address))
+            return False
+        
+    validate_ip_lbl.config(text="IP is valid", fg="green")
+    return True
+    
+def validate_port(port_num):
+
+    try:
+        port_num = int(port_num)
+    except ValueError:
+        validate_port_lbl.config(text="Port is not valid: {} (Not integer)".format(port_num))
+        return False
+
+
+    if not (1 <= port_num <= 65535):
+        validate_port_lbl.config(text="Port is not valid: {} (Out of Range)".format(port_num))
+        return False
+    else:
+        validate_port_lbl.config(text="Port is valid", fg = "green")
+        return True
+    
 
 # Confirms connection details
 def confirm_conn_details():
     global ip_address, port
 
     ip_address = ip_address_var.get()
-    console_log(("New IP: ", ip_address))
-
     port = port_var.get()
-    console_log(("New Port: ", port))
 
-    settings_ipaddress_detail_lbl.config(text=ip_address)
-    settings_port_detail_lbl.config(text=port)
+    validate_ip_lbl.config(fg="red")
+    validate_port_lbl.config(fg="red")
 
-    edit_conn_details_window.destroy()
+    chk_ip = validate_ip_address(ip_address)
+    chk_pt = validate_port(port)
+    
+    if chk_ip and chk_pt:
+        console_log(("New IP: ", ip_address))
+
+        port = port_var.get()
+        console_log(("New Port: ", port))
+
+        settings_ipaddress_detail_lbl.config(text=ip_address)
+        settings_port_detail_lbl.config(text=port)
+
+        edit_conn_details_window.destroy()
 
 
 # Confirms the new friendly name
