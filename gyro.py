@@ -3,10 +3,10 @@ Title:      Project Gyro
 Desc:       An OSC lighting controller for Chamsys MagicQ Lighting Consoles
 Author:     Kalos Robinson-Frani
 Email:      st20218@howick.school.nz
-Date:       19/08/24
+Date:       22/08/24
 
-Version 7:
-IP / Port Validation
+Version 7.1:
+Formatting
 
 Required Dependencies:
 python-osc
@@ -15,7 +15,10 @@ numpy
 """
 
 # Import Required Dependencies
-from tkinter import *; from PIL import Image, ImageTk; from tkinter import filedialog
+from tkinter import *
+from PIL import Image, ImageTk
+from tkinter import filedialog
+
 from pythonosc import udp_client
 import datetime
 
@@ -607,8 +610,7 @@ def fixture_select(event):
         intensity_sdr.config(state=DISABLED)
 
     if fixture.att_pantilt:
-        pan_sdr.config(state=ACTIVE, from_=0, to=173)
-        #pan_sdr.config(state=ACTIVE, from_=fixture.pan_range[0], to=fixture.pan_range[1])
+        pan_sdr.config(state=ACTIVE, from_=fixture.pan_range[0], to=fixture.pan_range[1])
         
 
         tilt_sdr.config(state=ACTIVE, from_=fixture.tilt_range[0], to=fixture.tilt_range[1])
