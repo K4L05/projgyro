@@ -31,7 +31,7 @@ import json
 default_padding = 10
 
 # Program Title
-PROGRAM_TITLE = "PROJ GYRO\nV7.0"
+PROGRAM_TITLE = "PROJ GYRO\nV7.1"
 
 # Connection Details
 ip_address = "localhost" # Localhost by default because the osc module gets angry when a destination is invalid
